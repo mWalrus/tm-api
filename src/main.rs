@@ -4,13 +4,8 @@ mod records;
 mod routes;
 mod token;
 
-use lazy_static::lazy_static;
 use reqwest::Client;
 use token::Token;
-
-lazy_static! {
-    pub static ref CLIENT: Client = Client::new();
-}
 
 #[launch]
 fn rocket() -> _ {
@@ -22,5 +17,6 @@ fn rocket() -> _ {
     rocket::custom(&config)
         .register("/", catchers![routes::not_found, routes::default])
         .manage(Token::auth().unwrap())
+        .manage(Client::new())
         .mount("/", routes![routes::np])
 }

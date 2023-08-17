@@ -1,3 +1,4 @@
+use reqwest::Client;
 use rocket::{
     http::Status,
     response::status,
@@ -18,7 +19,9 @@ pub fn not_found() -> status::Custom<&'static str> {
 }
 
 #[get("/np/map/<muid>")]
-pub async fn np(muid: &str, token: &State<Token>) -> status::Custom<Value> {
-    let player_count = records::get_player_count(muid, token).await.unwrap();
+pub async fn np(muid: &str, token: &State<Token>, client: &State<Client>) -> status::Custom<Value> {
+    let player_count = records::get_player_count(muid, token, client)
+        .await
+        .unwrap();
     status::Custom(Status::Ok, json!({ "player_count": player_count }))
 }
