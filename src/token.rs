@@ -13,8 +13,6 @@ use rocket::serde::json::serde_json::json;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::CREDS;
-
 static SESSION_URL: &str = "https://public-ubiservices.ubi.com/v3/profiles/sessions";
 static BASIC_AUTH_URL: &str =
     "https://prod.trackmania.core.nadeo.online/v2/authentication/token/ubiservices";
@@ -34,7 +32,7 @@ struct TokenPayload {
     exp: u32,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Token {
     access_token: String,
     refresh_token: String,
@@ -63,6 +61,7 @@ impl Token {
     }
 
     fn session_ticket_request(client: &Client) -> anyhow::Result<Option<String>> {
+        let mut creds = include_str!("../auth.key").split_terminator(':');
         let res = client
             .post(SESSION_URL)
             .header(CONTENT_TYPE, "application/json")
@@ -71,7 +70,7 @@ impl Token {
                 "User-Agent",
                 "MapRank Plugin / hellkvistoskar@protonmail.com",
             )
-            .basic_auth(&*CREDS.0, Some(&*CREDS.1))
+            .basic_auth(creds.next().unwrap(), Some(creds.next().unwrap()))
             .send()?;
 
         let status = res.status();
@@ -113,7 +112,8 @@ impl Token {
         let token_response: TokenResponse = serde_json::from_str(&text)?;
         let token_payload = Self::decode_payload(&token_response)?;
 
-        Ok(Token::from((token_response, token_payload)))
+        let token = Token::from((token_response, token_payload));
+        Ok(token)
     }
 
     fn decode_payload(token_response: &TokenResponse) -> anyhow::Result<TokenPayload> {
