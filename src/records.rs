@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use reqwest::{header::AUTHORIZATION, Client};
 use rocket::State;
 use serde::Deserialize;
@@ -21,19 +23,29 @@ pub struct Top {
 
 pub async fn get_player_count(
     muid: &str,
-    token: &State<Token>,
+    token: &State<Arc<Mutex<Token>>>,
     client: &State<Client>,
-) -> anyhow::Result<u32> {
-    let url = format!("https://live-services.trackmania.nadeo.live/api/token/leaderboard/group/Personal_Best/map/{muid}/surround/1/1?onlyWorld=true&score=4294967295");
+) -> anyhow::Result<Option<u32>> {
+    let access_token = if let Ok(token) = token.lock() {
+        Some(token.as_header())
+    } else {
+        None
+    };
 
-    let req = client
-        .get(url)
-        .header(AUTHORIZATION, token.as_header())
-        .build()?;
+    if let Some(access_token) = access_token {
+        let url = format!("https://live-services.trackmania.nadeo.live/api/token/leaderboard/group/Personal_Best/map/{muid}/surround/1/1?onlyWorld=true&score=4294967295");
 
-    let text = client.execute(req).await?.text().await?;
-    let res: RecordResponse = serde_json::from_str(&text)?;
+        let req = client
+            .get(url)
+            .header(AUTHORIZATION, access_token)
+            .build()?;
 
-    let count = res.tops[0].top[0].position;
-    Ok(count)
+        let res = client.execute(req).await?;
+        let text = res.text().await?;
+        let records: RecordResponse = serde_json::from_str(&text)?;
+
+        let count = records.tops[0].top[0].position;
+        return Ok(Some(count));
+    }
+    Ok(None)
 }

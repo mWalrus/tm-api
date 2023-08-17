@@ -5,6 +5,7 @@ use base64::{
     Engine,
 };
 use reqwest::{
+    blocking::Client as BlockingClient,
     header::{AUTHORIZATION, CONTENT_TYPE},
     Client, StatusCode,
 };
@@ -27,16 +28,16 @@ struct TokenResponse<'t> {
 
 #[derive(Deserialize, Debug)]
 struct TokenPayload {
-    rat: u32,
-    exp: u32,
+    rat: u64,
+    exp: u64,
 }
 
 #[derive(Default, Debug)]
 pub struct Token {
-    access_token: String,
+    pub access_token: String,
     refresh_token: String,
-    rat: u32,
-    exp: u32,
+    pub rat: u64,
+    exp: u64,
 }
 
 impl<'t> From<(TokenResponse<'t>, TokenPayload)> for Token {
@@ -114,6 +115,7 @@ impl Token {
         let token_payload = Self::decode_payload(&token_response)?;
 
         let token = Token::from((token_response, token_payload));
+
         Ok(token)
     }
 
@@ -131,18 +133,17 @@ impl Token {
         Err(anyhow!("Failed to decode token payload"))
     }
 
-    pub async fn refresh(&mut self) -> anyhow::Result<()> {
-        let client = Client::new();
+    pub fn refresh(&mut self) -> anyhow::Result<()> {
+        let client = BlockingClient::new();
         let authorization = format!("nadeo_v1 t={}", self.refresh_token);
 
         let res = client
             .post(BASIC_REFRESH_URL)
             .header(AUTHORIZATION, authorization)
-            .send()
-            .await?;
+            .send()?;
 
         let status = res.status();
-        let text = res.text().await?;
+        let text = res.text()?;
 
         if status != StatusCode::OK {
             return Err(anyhow!("Failed to refresh access token"));
