@@ -10,7 +10,10 @@ use crate::{records, token::Token};
 
 #[catch(default)]
 pub fn default(status: Status, _req: &Request<'_>) -> status::Custom<Value> {
-    status::Custom(status, json!({"message": "Something went wrong"}))
+    status::Custom(
+        status,
+        json!({ "message": format!("ERROR {status}: Something went wrong") }),
+    )
 }
 
 #[catch(404)]
