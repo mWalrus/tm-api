@@ -5,9 +5,8 @@ use base64::{
     Engine,
 };
 use reqwest::{
-    blocking::Client,
     header::{AUTHORIZATION, CONTENT_TYPE},
-    StatusCode,
+    Client, StatusCode,
 };
 use rocket::serde::json::serde_json::json;
 use serde::Deserialize;
@@ -52,15 +51,15 @@ impl<'t> From<(TokenResponse<'t>, TokenPayload)> for Token {
 }
 
 impl Token {
-    pub fn auth() -> anyhow::Result<Token> {
+    pub async fn auth() -> anyhow::Result<Token> {
         let client = Client::new();
 
-        let ticket = Self::session_ticket_request(&client)?.unwrap();
+        let ticket = Self::session_ticket_request(&client).await?.unwrap();
 
-        Self::token_request(&client, ticket)
+        Self::token_request(&client, ticket).await
     }
 
-    fn session_ticket_request(client: &Client) -> anyhow::Result<Option<String>> {
+    async fn session_ticket_request(client: &Client) -> anyhow::Result<Option<String>> {
         let mut creds = include_str!("../auth.key").split_terminator(':');
         let res = client
             .post(SESSION_URL)
@@ -71,10 +70,11 @@ impl Token {
                 "MapRank Plugin / hellkvistoskar@protonmail.com",
             )
             .basic_auth(creds.next().unwrap(), Some(creds.next().unwrap()))
-            .send()?;
+            .send()
+            .await?;
 
         let status = res.status();
-        let text = res.text()?;
+        let text = res.text().await?;
 
         if status != StatusCode::OK {
             return Err(anyhow!("ERROR: failed to get session ticket: {}", text));
@@ -88,7 +88,7 @@ impl Token {
         }
     }
 
-    fn token_request(client: &Client, ticket: String) -> anyhow::Result<Token> {
+    async fn token_request(client: &Client, ticket: String) -> anyhow::Result<Token> {
         let auth = format!("ubi_v1 t={}", ticket);
 
         let body = json!({
@@ -100,10 +100,11 @@ impl Token {
             .header(AUTHORIZATION, auth)
             .header(CONTENT_TYPE, "application/json")
             .body(body.to_string())
-            .send()?;
+            .send()
+            .await?;
 
         let status = res.status();
-        let text = res.text()?;
+        let text = res.text().await?;
 
         if status != StatusCode::OK {
             return Err(anyhow!("ERROR: Failed to fetch access token: {}", text));
@@ -130,17 +131,18 @@ impl Token {
         Err(anyhow!("Failed to decode token payload"))
     }
 
-    pub fn refresh(&mut self) -> anyhow::Result<()> {
+    pub async fn refresh(&mut self) -> anyhow::Result<()> {
         let client = Client::new();
         let authorization = format!("nadeo_v1 t={}", self.refresh_token);
 
         let res = client
             .post(BASIC_REFRESH_URL)
             .header(AUTHORIZATION, authorization)
-            .send()?;
+            .send()
+            .await?;
 
         let status = res.status();
-        let text = res.text()?;
+        let text = res.text().await?;
 
         if status != StatusCode::OK {
             return Err(anyhow!("Failed to refresh access token"));

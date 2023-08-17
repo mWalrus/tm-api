@@ -8,7 +8,7 @@ use reqwest::Client;
 use token::Token;
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
     let config = rocket::Config {
         port: 1337,
         ..Default::default()
@@ -16,7 +16,7 @@ fn rocket() -> _ {
 
     rocket::custom(&config)
         .register("/", catchers![routes::not_found, routes::default])
-        .manage(Token::auth().unwrap())
+        .manage(Token::auth().await.unwrap())
         .manage(Client::new())
         .mount("/", routes![routes::np])
 }
