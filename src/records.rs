@@ -44,7 +44,12 @@ pub async fn get_player_count(
         let text = res.text().await?;
         let records: RecordResponse = serde_json::from_str(&text)?;
 
-        let count = records.tops[0].top[0].position;
+        let mut count = records.tops[0].top[0].position;
+        // this means that there are really no players who have set records on this map
+        if records.tops[0].top.len() == 1 && count == 1 {
+            count = 0;
+        }
+
         return Ok(Some(count));
     }
     Ok(None)
