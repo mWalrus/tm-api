@@ -61,7 +61,13 @@ impl Token {
     }
 
     async fn session_ticket_request(client: &Client) -> anyhow::Result<Option<String>> {
-        let mut creds = include_str!("../auth.key").split_terminator(':');
+        let auth_string = include_str!("../auth.key");
+        let auth_string = auth_string.replace("\n", "");
+
+        let mut creds = auth_string.split_terminator(':');
+        let user = creds.next().unwrap();
+        let pass = creds.next().unwrap();
+
         let res = client
             .post(SESSION_URL)
             .header(CONTENT_TYPE, "application/json")
@@ -70,7 +76,7 @@ impl Token {
                 "User-Agent",
                 "MapRank Plugin / hellkvistoskar@protonmail.com",
             )
-            .basic_auth(creds.next().unwrap(), Some(creds.next().unwrap()))
+            .basic_auth(user, Some(pass))
             .send()
             .await?;
 
