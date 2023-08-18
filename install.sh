@@ -1,3 +1,6 @@
+echo "Compiling API"
+cargo build --release
+
 echo "-> Copying service file"
 cp "./tm-api.service" /etc/systemd/system/tm-api.service
 
