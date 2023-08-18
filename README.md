@@ -2,7 +2,7 @@
 This is a small API serving my [MapRank plugin](https://github.com/mWalrus/MapRank).
 
 ## Requirements
-- Rust (`cargo`, toolchain, etc. setup)
+- Rust >= 1.67.0 (`cargo`, toolchain, etc. setup)
 
 ## Install
 1. On your server: `git clone https://github.com/mWalrus/tm-api.git /var/www/`
