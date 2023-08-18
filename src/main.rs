@@ -16,7 +16,7 @@ use token::Token;
 #[launch]
 async fn rocket() -> _ {
     let config = rocket::Config {
-        port: 1337,
+        port: 8000,
         ..Default::default()
     };
 

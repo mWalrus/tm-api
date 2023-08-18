@@ -1,6 +1,11 @@
 # TM API
 This is a small API serving my [MapRank plugin](https://github.com/mWalrus/MapRank).
 
+## Install
+1. On your server: `git clone https://github.com/mWalrus/tm-api.git /var/www/`
+2. `install.sh`
+3. Configure your webserver with a reverse proxy to `localhost:8000`
+
 ## Usage
 If you want to host this yourself you'll need to:
 1. Clone the repo: `git clone https://github.com/mWalrus/tm-api`

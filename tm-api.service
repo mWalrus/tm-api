@@ -1,0 +1,11 @@
+[Unit]
+Description=Trackmania API
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/tm-api
+ExecStart=/var/www/tm-api/target/release/tm-api
+
+[Install]
+WantedBy=multi-user.target
