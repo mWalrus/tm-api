@@ -34,3 +34,16 @@ pub async fn np(
         .unwrap();
     status::Custom(Status::Ok, json!({ "player_count": player_count }))
 }
+
+#[get("/pos/<muid>/<score>")]
+pub async fn pos(
+    muid: &str,
+    score: u64,
+    token: &State<Arc<Mutex<Token>>>,
+    client: &State<Client>,
+) -> status::Custom<Value> {
+    let pos = records::get_map_pos_at(muid, score, token, client)
+        .await
+        .unwrap();
+    status::Custom(Status::Ok, json!({ "position": pos }))
+}

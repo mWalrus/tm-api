@@ -53,5 +53,5 @@ async fn rocket() -> _ {
         .register("/", catchers![routes::not_found, routes::default])
         .manage(token)
         .manage(Client::new())
-        .mount("/", routes![routes::np])
+        .mount("/", routes![routes::np, routes::pos])
 }
