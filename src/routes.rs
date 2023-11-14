@@ -31,7 +31,7 @@ pub async fn np(
 ) -> status::Custom<Value> {
     let player_count = records::get_player_count(muid, token, client)
         .await
-        .unwrap();
+        .unwrap_or_default();
     status::Custom(Status::Ok, json!({ "player_count": player_count }))
 }
 
@@ -44,6 +44,6 @@ pub async fn pos(
 ) -> status::Custom<Value> {
     let pos = records::get_map_pos_at(muid, score, token, client)
         .await
-        .unwrap();
+        .unwrap_or_default();
     status::Custom(Status::Ok, json!({ "position": pos }))
 }
