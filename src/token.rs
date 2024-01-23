@@ -199,6 +199,7 @@ pub fn run_token_thread(token: &Arc<Mutex<Token>>) {
                 Ok(delta_time) => delta_time,
                 Err(e) => {
                     eprintln!("ERROR: failed to get token lifetime: {e:?}");
+                    // try to refresh faster if authentication failed
                     Duration::from_secs(60)
                 }
             };
