@@ -6,6 +6,11 @@ use serde::Deserialize;
 
 use crate::token::Token;
 
+enum PositionType {
+    PlayerCount,
+    PlayerPosition,
+}
+
 #[derive(Deserialize, Debug)]
 pub struct RecordResponse {
     tops: Vec<Tops>,
@@ -28,16 +33,7 @@ pub async fn get_player_count(
 ) -> anyhow::Result<Option<u64>> {
     let records = make_record_request(muid, 4294967295, 1, token, client).await?;
 
-    if let Some(records) = records {
-        let mut count = records.tops[0].top[0].position;
-        // this means that there are really no players who have set records on this map
-        if records.tops[0].top.len() == 1 && count == 1 {
-            count = 0;
-        }
-        Ok(Some(count))
-    } else {
-        Ok(None)
-    }
+    Ok(find_position(records, PositionType::PlayerCount))
 }
 
 pub async fn get_map_pos_at(
@@ -47,12 +43,7 @@ pub async fn get_map_pos_at(
     client: &State<Client>,
 ) -> anyhow::Result<Option<u64>> {
     let records = make_record_request(muid, score, 0, token, client).await?;
-    if let Some(records) = records {
-        let count = records.tops[0].top[0].position;
-        Ok(Some(count))
-    } else {
-        Ok(None)
-    }
+    Ok(find_position(records, PositionType::PlayerPosition))
 }
 
 async fn make_record_request(
@@ -83,4 +74,28 @@ async fn make_record_request(
         return Ok(Some(records));
     }
     Ok(None)
+}
+
+/// Find the player's actual position on the leaderboards
+/// * `records` - The (perhaps empty) records response object deserialized from our requests.
+/// * `position_type` - Determines whether the position needs correcting in certain cases.
+fn find_position<'a>(records: Option<RecordResponse>, position_type: PositionType) -> Option<u64> {
+    let tops = records?.tops.get(0)?;
+    let top = tops.top.get(0)?;
+
+    let mut pos = top.position;
+    match position_type {
+        PositionType::PlayerCount => {
+            // Usually, when fetching the current score and the surrounding scores, we would get back 3 scores.
+            // However, this is not the case when there are no records on a map and we can detect that by checking
+            // whether the amount of records are 1. This means that, in reality, there are no records.
+            // So here, we just correct the reported player count to what it should be in this case, which is 0.
+            if tops.top.len() == 1 && pos == 1 {
+                pos = 0;
+            }
+        }
+        _ => {}
+    }
+
+    Some(pos)
 }
