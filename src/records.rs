@@ -76,9 +76,6 @@ async fn make_record_request(
     Ok(None)
 }
 
-/// Find the player's actual position on the leaderboards
-/// * `records` - The (perhaps empty) records response object deserialized from our requests.
-/// * `position_type` - Determines whether the position needs correcting in certain cases.
 fn find_position<'a>(records: Option<RecordResponse>, position_type: PositionType) -> Option<u64> {
     let tops = records?.tops.get(0)?;
     let top = tops.top.get(0)?;
