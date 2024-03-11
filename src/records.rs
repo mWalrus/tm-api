@@ -77,7 +77,8 @@ async fn make_record_request(
 }
 
 fn find_position<'a>(records: Option<RecordResponse>, position_type: PositionType) -> Option<u64> {
-    let tops = records?.tops.get(0)?;
+    let records = records?;
+    let tops = records.tops.get(0)?;
     let top = tops.top.get(0)?;
 
     let mut pos = top.position;
